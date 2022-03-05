@@ -33,28 +33,3 @@
     dest: "{{ k0s_runtime_dir }}"
     mode: 0755
     remote_src: yes
-
-- name: Configure autocompletion for the user only
-  ansible.builtin.lineinfile:
-    path: "{{ ansible_user_dir }}/.{{ command_shell | lower }}rc"
-    regexp: "^source <(k0s completion {{ command_shell | lower }})"
-    line: "source <(k0s completion {{ command_shell | lower }})"
-  when: not k0s_for_all_users
-
-- name: Set global profile file for bash
-  set_fact:
-    global_profile_file: /etc/profile
-  when: k0s_for_all_users | bool and command_shell | lower == "bash"
-
-- name: Set global profile file for zsh
-  set_fact:
-    global_profile_file: /etc/zshenv
-  when: k0s_for_all_users | bool and command_shell | lower == "zsh"
-
-- name: Configure autocompletion for all users
-  ansible.builtin.lineinfile:
-    path: "{{ global_profile_file }}"
-    regexp: "^source <(k0s completion {{ command_shell | lower }})"
-    line: "source <(k0s completion {{ command_shell | lower }})"
-  when: k0s_for_all_users
-  become: yes
