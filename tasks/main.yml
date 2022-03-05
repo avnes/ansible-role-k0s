@@ -1,0 +1,60 @@
+---
+- name: Install required software
+  package:
+    name: unzip
+    state: present
+
+- name: Set download directory if install only for the user
+  set_fact:
+    k0s_runtime_dir: "{{ ansible_user_dir }}/bin"
+  when: not k0s_for_all_users | bool
+
+- name: Set download directory for all users to use
+  set_fact:
+    k0s_runtime_dir: "/usr/local/bin"
+  when: k0s_for_all_users | bool
+
+- name: Create bin directory in users home if necessary for local install
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/bin"
+    state: directory
+    mode: 0755
+  when: not k0s_for_all_users | bool
+
+- name: Download file
+  get_url:
+    url: "https://github.com/k0sproject/k0s/releases/download/{{ k0s_version }}/k0s-{{ k0s_version }}-amd64"
+    dest: "/tmp/k0s"
+    mode: 0755
+
+- name: Copy file to runtime directory
+  copy:
+    src: "/tmp/k0s"
+    dest: "{{ k0s_runtime_dir }}"
+    mode: 0755
+    remote_src: yes
+
+- name: Configure autocompletion for the user only
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_user_dir }}/.{{ command_shell | lower }}rc"
+    regexp: "^source <(k0s completion {{ command_shell | lower }})"
+    line: "source <(k0s completion {{ command_shell | lower }})"
+  when: not k0s_for_all_users
+
+- name: Set global profile file for bash
+  set_fact:
+    global_profile_file: /etc/profile
+  when: k0s_for_all_users | bool and command_shell | lower == "bash"
+
+- name: Set global profile file for zsh
+  set_fact:
+    global_profile_file: /etc/zshenv
+  when: k0s_for_all_users | bool and command_shell | lower == "zsh"
+
+- name: Configure autocompletion for all users
+  ansible.builtin.lineinfile:
+    path: "{{ global_profile_file }}"
+    regexp: "^source <(k0s completion {{ command_shell | lower }})"
+    line: "source <(k0s completion {{ command_shell | lower }})"
+  when: k0s_for_all_users
+  become: yes
