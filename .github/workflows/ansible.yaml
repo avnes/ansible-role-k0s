@@ -2,6 +2,8 @@ name: Ansible workflow
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '.github/**'
   pull_request:
     branches: [ main ]
   release:
@@ -22,13 +24,13 @@ jobs:
       - name: Create ephemeral requirements.txt for pip
         run: "cd ${{ github.repository }} && $HOME/.local/bin/poetry export --dev --output requirements.txt"
       - name: Run Molecule test case
-        uses: robertdebock/molecule-action@4.0.7
+        uses: robertdebock/molecule-action@4.0.8
   release:
     needs:
       - test
     runs-on: ubuntu-latest
     steps:
       - name: Publish to Ansible Galaxy
-        uses: robertdebock/galaxy-action@1.2.0
+        uses: robertdebock/galaxy-action@1.2.1
         with:
           galaxy_api_key: ${{ secrets.GALAXY_API_KEY }}
