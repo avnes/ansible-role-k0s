@@ -1,16 +1,16 @@
 ---
 - name: Install required software
-  package:
+  ansible.builtin.package:
     name: unzip
     state: present
 
 - name: Set download directory if install only for the user
-  set_fact:
+  ansible.builtin.set_fact:
     k0s_runtime_dir: "{{ ansible_user_dir }}/bin"
   when: not k0s_for_all_users | bool
 
 - name: Set download directory for all users to use
-  set_fact:
+  ansible.builtin.set_fact:
     k0s_runtime_dir: "/usr/local/bin"
   when: k0s_for_all_users | bool
 
@@ -22,13 +22,13 @@
   when: not k0s_for_all_users | bool
 
 - name: Download file
-  get_url:
+  ansible.builtin.get_url:
     url: "https://github.com/k0sproject/k0s/releases/download/{{ k0s_version }}/k0s-{{ k0s_version }}-amd64"
     dest: "/tmp/k0s"
     mode: 0755
 
 - name: Copy file to runtime directory
-  copy:
+  ansible.builtin.copy:
     src: "/tmp/k0s"
     dest: "{{ k0s_runtime_dir }}"
     mode: 0755
